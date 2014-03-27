@@ -1,5 +1,7 @@
 # Build path
 build
+# libuv path
+libuv
 
 # Object files
 *.o
