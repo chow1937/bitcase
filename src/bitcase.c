@@ -14,10 +14,10 @@ void on_connection(uv_stream_t* server, int status) {
     if (status == -1) {
         return;
     }
-
+    /*Init the client stream*/
     uv_tcp_t *client = (uv_tcp_t*)malloc(sizeof(uv_tcp_t));
     uv_tcp_init(uv_default_loop(), client);
-
+    /*Accept the connection,start to read or close the client stream*/
     if (uv_accept(server, (uv_stream_t*)client) == 0) {
         uv_read_start((uv_stream_t*)client, alloc_buffer, after_read);
     } else {
