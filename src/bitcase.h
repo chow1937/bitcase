@@ -4,7 +4,7 @@
 /*Server configure*/
 #define BC_PORT 8638
 
-/*Error codes*/
+/*Status codes*/
 #define BC_OK 0
 #define BC_ERROR -1
 
