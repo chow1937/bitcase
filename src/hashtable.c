@@ -208,3 +208,85 @@ int ht_add(hash_table *ht, void *key, void *value) {
 
     return HT_OK;
 }
+
+/*Free the bucket*/
+int ht_free_bucket(bucket *bc) {
+    free(bc->key);
+    free(bc->value);
+    free(bc);
+
+    return HT_OK;
+}
+
+/*Delete a key/value pair from hashtable by key*/
+int ht_delete(hash_table *ht, void *key) {
+    uint32_t hash, index;
+    bucket *prev, *ptr, *next;
+
+    /*Generate hash and count index*/
+    hash = gen_hash(key);
+    index = hash & ht->mask;
+
+    prev = NULL;
+    ptr = ht->table[index];
+    if (ptr == NULL) {
+        /*Key not exists in this hashtable,return HT_ERROR*/
+        fprintf(stderr, "Delete error,%s not exists", (char*)key);
+        return HT_ERROR;
+    }
+
+    /*Iter the left bucket list*/
+    while (ptr) {
+        next = ptr->next;
+        if (strcmp((char*)key, (char*)ptr->key) == 0) {
+            ht_free_bucket(next);
+            if (prev == NULL) {
+                ht->table[index] = next;
+            } else {
+                prev->next = next;
+            }
+
+            return HT_OK;
+        }
+        /*Move forward*/
+        prev = ptr;
+        ptr = next;
+    }
+
+    return HT_ERROR;
+}
+
+/*Find a bucket in the hashtable by key*/
+bucket *ht_find(hash_table *ht, void *key) {
+    uint32_t hash, index;
+    bucket *head, *next;
+
+    hash = gen_hash(key);
+    index = hash & ht->mask;
+    head = ht->table[index];
+
+    /*Iter the bucket list*/
+    while(head) {
+        next = head->next;
+        if(strcmp((char*)key, (char*)head->key) == 0)  {
+            return head;
+        }
+        head = next;
+    }
+
+    return NULL;
+}
+
+/*Update a bucket by key*/
+int ht_update(hash_table *ht, void *key, void *value) {
+    bucket *bc;
+
+    bc = ht_find(ht, key);
+    if (bc) {
+        bc->value = value;
+        return HT_OK;
+    } else {
+        fprintf(stderr, "Update error, key %s not exists", (char*)key);
+        return HT_ERROR;
+    }
+}
