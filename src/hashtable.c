@@ -235,11 +235,12 @@ int ht_delete(hash_table *ht, void *key) {
         return HT_ERROR;
     }
 
-    /*Iter the left bucket list*/
+    /*Iter the bucket list*/
     while (ptr) {
         next = ptr->next;
         if (strcmp((char*)key, (char*)ptr->key) == 0) {
             ht_free_bucket(next);
+            ht->used--;
             if (prev == NULL) {
                 ht->table[index] = next;
             } else {
