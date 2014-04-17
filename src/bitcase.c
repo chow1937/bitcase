@@ -1,8 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <sys/time.h>
 #include <uv.h>
 
 #include "bitcase.h"
+
+/*----Helper functions--*/
+
+/*Return the UNIX microseconds time*/
+long long micro_time(void) {
+    struct timeval time;
+    long long micro_second;
+
+    /*Get the time and add second and microsecond*/
+    gettimeofday(&time, NULL);
+    micro_second = ((long long)time.tv_sec) * 1000000 + time.tv_usec;
+    
+    return micro_second;
+}
 
 /*Buffer allocation callback*/
 uv_buf_t alloc_buffer(uv_handle_t* handle, size_t suggested_size) {
