@@ -326,14 +326,6 @@ bucket *ht_find(hash_table *ht, void *key) {
     while(head) {
         next = head->next;
         if(strcmp((char*)key, (char*)head->key) == 0)  {
-            /*
-             * When find a key, first detach the lru node,
-             * then attach the lru node to the head of the
-             * lru list.
-             * */
-            ht_detach_lru(head->lru);
-            ht_attach_lru(ht->llist, head->lru);
-
             return head;
         }
         head = next;
@@ -344,11 +336,19 @@ bucket *ht_find(hash_table *ht, void *key) {
 
 /*Update a bucket by key*/
 int ht_update(hash_table *ht, void *key, void *value) {
-    bucket *bc;
+    bucket *bk;
 
-    bc = ht_find(ht, key);
-    if (bc) {
-        bc->value = value;
+    bk = ht_find(ht, key);
+    if (bk) {
+        bk->value = value;
+        /*
+         * When find a key, first detach the lru node,
+         * then attach the lru node to the head of the
+         * lru list.
+         * */
+        ht_detach_lru(bk->lru);
+        ht_attach_lru(ht->llist, bk->lru);
+
         return HT_OK;
     } else {
         fprintf(stderr, "Update error, key %s not exists", (char*)key);
