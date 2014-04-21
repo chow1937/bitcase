@@ -94,56 +94,10 @@ uint32_t ht_gen_hash(const void *key) {
     return h1;
 }
 
-/*Init a lru list*/
-int ht_init_lru(lru_list *llist) {
-    llist = (lru_list*)malloc(sizeof(lru_list));
-    if (llist) {
-        llist->head = (lru_node*)malloc(sizeof(lru_node));
-        llist->tail = (lru_node*)malloc(sizeof(lru_node));
-        if (llist->head && llist->tail) {
-            /*Init head and tail node*/
-            llist->head->prev = NULL;
-            llist->head->next = llist->tail;
-            llist->tail->prev = llist->head;
-            llist->tail->next = NULL;
-
-            return HT_OK;
-        }
-        return HT_ERROR;
-    }
-
-    return HT_ERROR;
-}
-
-/*Attache a lru_node to a lru_list head*/
-int ht_attach_lru(lru_list *llist, lru_node *lru) {
-    /*Set the new node first*/
-    lru->prev = llist->head;
-    lru->next = llist->head->next;
-    /*Disconnect head and next*/
-    llist->head->next = lru;
-    lru->next->prev = lru;
-
-    return HT_OK;
-}
-
-/*Detache a lru from a lru_list*/
-int ht_detach_lru(lru_node *lru) {
-    lru->prev->next = lru->next;
-    lru->next->prev = lru->prev;
-
-    return HT_OK;
-}
-
 /*Free a bucket*/
 int ht_free_bucket(bucket *bk) {
     free(bk->key);
     free(bk->value);
-    /*
-     * When free a bucket ,detach the lru node from the lru list
-     * */
-    ht_detach_lru(bk->lru);
-    free(bk->lru);
     free(bk);
 
     return HT_OK;
@@ -155,7 +109,6 @@ void ht_reset(hash_table *ht) {
     ht->mask = 0;
     ht->size = 0;
     ht->used = 0;
-    ht->llist = NULL;
 }
 
 /*Clear the hashtable and release the memory*/
@@ -179,7 +132,6 @@ int ht_clear(hash_table *ht) {
     }
 
     free(ht->table);
-    free(ht->llist);
     ht_reset(ht);
 
     return HT_OK;
@@ -221,13 +173,12 @@ hash_table *ht_create(void) {
         fprintf(stderr, "Memory malloc error\n");
     }
     ht_alloc(ht, HT_MIN_SIZE);
-    ht_init_lru(ht->llist);
 
     return ht;
 }
 
 /*Add a new key/value into a hashtable*/
-int ht_add(hash_table *ht, void *key, void *value) {
+bucket *ht_add(hash_table *ht, void *key, void *value) {
     uint32_t i, index, hash;
     bucket *head, *next, *new;
 
@@ -243,9 +194,9 @@ int ht_add(hash_table *ht, void *key, void *value) {
         /*Iter the bucket list*/
         while (head) {
             next = head->next;
-            /*If the key already exists,then return HT_ERROR*/
+            /*If the key already exists,then return NULL pointer*/
             if (strcmp((char*)key, (char*)head->key) == 0) {
-                return HT_ERROR;
+                return NULL;
             }
             head = next;
         }
@@ -259,19 +210,10 @@ int ht_add(hash_table *ht, void *key, void *value) {
     new->key = key;
     new->value = value;
 
-    /*Deal with the LRU thing*/
-    new->lru = (lru_node*)malloc(sizeof(lru_node));
-    new->lru->bk = new;
-    /*
-     * When add a new bucket,attach a new lru node to the
-     * head of the lru list.
-     * */
-    ht_attach_lru(ht->llist, new->lru);
-
     ht->table[index] = new;
     ht->used++;
 
-    return HT_OK;
+    return new;
 }
 
 /*Delete a key/value pair from hashtable by key*/
@@ -287,7 +229,7 @@ int ht_delete(hash_table *ht, void *key) {
     ptr = ht->table[index];
     if (ptr == NULL) {
         /*Key not exists in this hashtable,return HT_ERROR*/
-        fprintf(stderr, "Delete error,%s not exists", (char*)key);
+        fprintf(stderr, "Delete error,key %s not exists", (char*)key);
         return HT_ERROR;
     }
 
@@ -335,23 +277,16 @@ bucket *ht_find(hash_table *ht, void *key) {
 }
 
 /*Update a bucket by key*/
-int ht_update(hash_table *ht, void *key, void *value) {
+bucket *ht_update(hash_table *ht, void *key, void *value) {
     bucket *bk;
 
     bk = ht_find(ht, key);
     if (bk) {
         bk->value = value;
-        /*
-         * When find a key, first detach the lru node,
-         * then attach the lru node to the head of the
-         * lru list.
-         * */
-        ht_detach_lru(bk->lru);
-        ht_attach_lru(ht->llist, bk->lru);
 
-        return HT_OK;
+        return bk;
     } else {
         fprintf(stderr, "Update error, key %s not exists", (char*)key);
-        return HT_ERROR;
+        return NULL;
     }
 }
