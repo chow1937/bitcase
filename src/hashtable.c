@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "lru.h"
 #include "hashtable.h"
 
 /*----Hash function and it's helper functions----*/
