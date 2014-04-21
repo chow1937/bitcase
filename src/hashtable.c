@@ -199,7 +199,6 @@ int ht_alloc(hash_table *ht, unsigned long size) {
     ht->size = real_size;
     ht->mask = real_size - 1;
     ht->used = 0;
-    ht_init_lru(ht->llist);
 
     /*Alloc memory*/
     ht->table = (bucket**)malloc(real_size*sizeof(bucket*));
@@ -222,6 +221,7 @@ hash_table *ht_create(void) {
         fprintf(stderr, "Memory malloc error\n");
     }
     ht_alloc(ht, HT_MIN_SIZE);
+    ht_init_lru(ht->llist);
 
     return ht;
 }
