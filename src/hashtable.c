@@ -81,7 +81,7 @@ uint32_t MurmurHash3(const void *key, int len, uint32_t seed) {
 /*----API implementations----*/
 
 /*Generate hash*/
-uint32_t gen_hash(const void *key) {
+uint32_t ht_gen_hash(const void *key) {
     uint32_t seed = HT_SEED;
     uint32_t h1;
     size_t len;
@@ -232,7 +232,7 @@ int ht_add(hash_table *ht, void *key, void *value) {
     bucket *head, *next, *new;
 
     /*Generate hash and count table index*/
-    hash = gen_hash(key);
+    hash = ht_gen_hash(key);
     index = hash & ht->mask;
 
     /*Try to insert the new key/value into a free slot*/
@@ -280,7 +280,7 @@ int ht_delete(hash_table *ht, void *key) {
     bucket *prev, *ptr, *next;
 
     /*Generate hash and count index*/
-    hash = gen_hash(key);
+    hash = ht_gen_hash(key);
     index = hash & ht->mask;
 
     prev = NULL;
@@ -318,7 +318,7 @@ bucket *ht_find(hash_table *ht, void *key) {
     uint32_t hash, index;
     bucket *head, *next;
 
-    hash = gen_hash(key);
+    hash = ht_gen_hash(key);
     index = hash & ht->mask;
     head = ht->table[index];
 

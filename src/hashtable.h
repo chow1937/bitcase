@@ -59,6 +59,6 @@ int ht_alloc(hash_table *ht, unsigned long size);
 int ht_add(hash_table *ht, void *key, void *value);
 int ht_delete(hash_table *ht, void *key);
 int ht_update(hash_table *ht, void *key, void *value);
-uint32_t gen_hash(const void *key);
+uint32_t ht_gen_hash(const void *key);
 
 #endif
