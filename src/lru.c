@@ -4,7 +4,7 @@
 #include "lru.h"
 
 /*Init a lru list*/
-int init_lru(lru_list *llist) {
+int lru_init(lru_list *llist) {
     llist = (lru_list*)malloc(sizeof(lru_list));
     if (llist) {
         llist->head = (lru_node*)malloc(sizeof(lru_node));
@@ -16,12 +16,12 @@ int init_lru(lru_list *llist) {
             llist->tail->prev = llist->head;
             llist->tail->next = NULL;
 
-            return HT_OK;
+            return LRU_OK;
         }
-        return HT_ERROR;
+        return LRU_ERROR;
     }
 
-    return HT_ERROR;
+    return LRU_ERROR;
 }
 
 /*Attache a lru_node to a lru_list head*/
@@ -33,13 +33,13 @@ int attach(lru_list *llist, lru_node *lru) {
     llist->head->next = lru;
     lru->next->prev = lru;
 
-    return HT_OK;
+    return LRU_OK;
 }
 
-/*Detache a lru from a lru_list*/
+/*Detach a lru from a lru_list*/
 int detach(lru_node *lru) {
     lru->prev->next = lru->next;
     lru->next->prev = lru->prev;
 
-    return HT_OK;
+    return LRU_OK;
 }

@@ -1,7 +1,7 @@
 #ifndef _LRU_H
 #define _LRU_H
 
-#define LRU_OK 0
+#define 	LRU_OK 0
 #define LRU_ERROR -1
 
 /*Node for lru double linked list*/
