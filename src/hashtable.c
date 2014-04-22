@@ -97,6 +97,9 @@ uint32_t ht_gen_hash(const void *key) {
 
 /*Free a bucket*/
 int ht_free_bucket(bucket *bk) {
+    /*Detach the bucket lru node first*/
+    detach(bk->lru);
+    free(bk->lru);
     free(bk->key);
     free(bk->value);
     free(bk);
@@ -238,7 +241,7 @@ int ht_delete(hash_table *ht, void *key) {
     while (ptr) {
         next = ptr->next;
         if (strcmp((char*)key, (char*)ptr->key) == 0) {
-            ht_free_bucket(next);
+            ht_free_bucket(ptr);
             ht->used--;
             if (prev == NULL) {
                 ht->table[index] = next;

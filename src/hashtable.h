@@ -17,7 +17,7 @@ typedef struct bucket {
     /*next pointer to deal with the collision*/
     struct bucket *next;
     /*LRU list node*/
-    lru_node *lru;
+    struct lru_node *lru;
 } bucket;
 
 /*HashTable struct*/
