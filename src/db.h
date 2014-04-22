@@ -14,15 +14,16 @@ typedef struct db {
     uint32_t rehash_index;
     /*DB memory limit*/
     uint32_t mem_limit;
-    /*Count the key and value only*/
-    uint32_t used_mem;
+    /*Double linked list, for LRU*/
+    struct lru_list *llist;
 } db;
 
 /*APIs*/
 void db_init(db *d);
 db *db_create(void);
 bucket *db_get_key(db *d, void *key);
-int db_set_key(db *d, void *key, void *value);
+int db_add_key(db *d, void *key, void *value);
+int db_update_key(db *d, void *key, void *value);
 int db_delete_key(db *d, void *key);
 int db_rehash(db *d, int n);
 int db_resize(db *d, uint32_t size);
