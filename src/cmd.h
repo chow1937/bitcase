@@ -5,8 +5,10 @@
 #define CMD_OK 0
 #define CMD_ERROR -1
 
-typedef int cmd_proc(struct cmd *c);
-typedef struct cmd {
+typedef struct cmd cmd;
+typedef int cmd_proc(cmd *c);
+struct cmd {
+    /*Command process function*/
     cmd_proc *proc;
     /*DB that command execute on*/
     db *d;
@@ -15,7 +17,7 @@ typedef struct cmd {
     /*Command arg num and values*/
     int argc;
     char **argv;
-} cmd;
+};
 
 /*APIs*/
 cmd *cmd_parser(char *cmd_str);
