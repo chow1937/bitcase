@@ -28,8 +28,8 @@ int cmd_proc(cmd *c, char *cmd_name) {
     }
 
     /*Command update*/
-    if (strcmp(cmd_name, "get")) {
-        c->proc = cmd_get_proc;
+    if (strcmp(cmd_name, "update")) {
+        c->proc = cmd_update_proc;
         return CMD_OK;
     }
 
