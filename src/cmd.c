@@ -6,6 +6,17 @@
 #include "db.h"
 #include "cmd.h"
 
+/*Parse a command string,return a cmd*/
+cmd *cmd_parser(char *cmd_str) {
+
+}
+
+/*Execute the command*/
+int cmd_execute(cmd *c) {
+    /*Just invoke the proc function in the cmd*/
+    return c->proc(c);
+}
+
 /*Free a cmd,release it's memory*/
 int cmd_free(cmd *c) {
     int i;

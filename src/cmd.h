@@ -20,8 +20,9 @@ struct cmd {
 };
 
 /*APIs*/
+int cmd_proc(cmd *c, char *cmd_name);
 cmd *cmd_parser(char *cmd_str);
-int cmd_execute(cmd *c);
+int cmd_execute(cmd *c, char *result);
 int cmd_free(cmd *c);
 
 /*Command process functions*/
