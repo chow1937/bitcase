@@ -177,6 +177,8 @@ int db_update_key(db *d, void *key, void *value) {
     } else {
         /*If key not found in the DB,add the kye/value to the DB*/
         db_add_key(d, key, value);
+
+        return DB_OK;
     }
 }
 
