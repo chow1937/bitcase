@@ -6,6 +6,19 @@
 #include "db.h"
 #include "cmd.h"
 
+/*Free a cmd,release it's memory*/
+int cmd_free(cmd *c) {
+    int i;
+
+    free(c->result);
+    for (i = 0;i < c->argc;i++) {
+        free(c->argv[i]);
+    }
+    free(c);
+
+    return CMD_OK;
+}
+
 /*Process the get command*/
 int cmd_get_proc(cmd *c) {
     bucket *bk;
@@ -20,7 +33,8 @@ int cmd_get_proc(cmd *c) {
     }
 
     bk = db_get_key(c->d, (void*)c->argv[0]);
-    c->result = bk->value;
+    c->result = (void*)malloc(strlen(bk->value)*sizeof(char));
+    strcpy(c->result, bk->value);
 
     return CMD_OK;
 }
@@ -60,6 +74,13 @@ int cmd_delete_proc(cmd *c) {
         return CMD_ERROR;
     }
 
+    if (db_delete_key(c->d, c->argv[0]) == DB_OK) {
+        c->result = (void*)malloc(strlen(ok_str)*sizeof(char));
+        strcpy(c->result, err_str);
+        return CMD_OK;
+    }
+
+    return CMD_ERROR;
 };
 
 /*Process the udpate command*/
@@ -74,4 +95,12 @@ int cmd_update_proc(cmd *c) {
         strcpy(c->result, err_str);
         return CMD_ERROR;
     }
+
+    if (db_update_key(c->d, c->argv[0], c->argv[1]) == DB_OK) {
+        c->result = (void*)malloc(strlen(ok_str)*sizeof(char));
+        strcpy(c->result, ok_str);
+        return CMD_OK;
+    }
+
+    return CMD_ERROR;
 }
