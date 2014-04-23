@@ -5,16 +5,98 @@
 #include "hashtable.h"
 #include "db.h"
 #include "cmd.h"
+#include "bitcase.h"
+
+/*Set command process function to a cmd*/
+int cmd_proc(cmd *c, char *cmd_name) {
+    /*Command get*/
+    if (strcmp(cmd_name, "get")) {
+        c->proc = cmd_get_proc;
+        return CMD_OK;
+    }
+
+    /*Command set*/
+    if (strcmp(cmd_name, "set")) {
+        c->proc = cmd_set_proc;
+        return CMD_OK;
+    }
+
+    /*Command delete*/
+    if (strcmp(cmd_name, "delete")) {
+        c->proc = cmd_delete_proc;
+        return CMD_OK;
+    }
+
+    /*Command update*/
+    if (strcmp(cmd_name, "get")) {
+        c->proc = cmd_get_proc;
+        return CMD_OK;
+    }
+
+    fprintf(stderr, "No such command:%s", cmd_name);
+    return CMD_ERROR;
+}
 
 /*Parse a command string,return a cmd*/
 cmd *cmd_parser(char *cmd_str) {
+    int argc, i;
+    size_t len;
+    cmd *c;
+    char *line;
+    char *cmd_name, *tmp;
 
+    /*Parse the command name first*/
+    line = strstr(cmd_str, "\r\n");
+    len = line - cmd_str;
+    cmd_name = (char*)malloc((len+1)*sizeof(char));
+    strncpy(cmd_name, cmd_str, len);
+    cmd_name[len] = '\0';
+
+    /*Then get the arg amount*/
+    tmp = line + 2;
+    line = strstr(tmp, "\r\n");
+    len = line - tmp;
+    /*Usually no more than 9*/
+    argc = tmp[0] - '0';
+
+    c = (cmd*)malloc(sizeof(cmd));
+    c->argc = argc;
+    c->argv = (char**)malloc(argc);
+    /*Parse each arg*/
+    for (i = 0;i < argc;i++) {
+        tmp = line + 2;
+        line = strstr(tmp, "\r\n");
+        len = line - tmp;
+        c->argv[i] = (char*)malloc((len+1)*sizeof(char));
+        strncpy(c->argv[i], line+2, len);
+        c->argv[i][len] = '\0';
+    }
+    if (cmd_proc(c, cmd_name) == CMD_OK) {
+        c->d = server.d;
+        free(cmd_name);
+
+        return c;
+    }
+
+    return NULL;
 }
 
 /*Execute the command*/
-int cmd_execute(cmd *c) {
+int cmd_execute(cmd *c, char *result) {
     /*Just invoke the proc function in the cmd*/
-    return c->proc(c);
+    if (c->proc(c) == CMD_OK) {
+        result = (char*)malloc(strlen(c->result)*sizeof(char));
+        if (result == NULL)  {
+            fprintf(stderr, "Memory alloc error");
+            return CMD_ERROR;
+        }
+        strcpy(result, c->result);
+        cmd_free(c);
+
+        return CMD_OK;
+    }
+
+    return CMD_ERROR;
 }
 
 /*Free a cmd,release it's memory*/
