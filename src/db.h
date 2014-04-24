@@ -5,7 +5,10 @@
 #define DB_OK 0
 #define DB_ERROR -1
 
+/*2G memory*/
 #define DB_MAX_MEM 2147483648
+#define DB_REDUCE_RATIO 10
+#define DB_EXPEND_RATIO 2
 
 /*db struct*/
 typedef struct db {
@@ -26,7 +29,8 @@ int db_add_key(db *d, void *key, void *value);
 int db_update_key(db *d, void *key, void *value);
 int db_delete_key(db *d, void *key);
 int db_rehash(db *d, int n);
-int db_rehash_microsec(db *d, int n);
+int db_rehash_millisec(db *d, int n);
 int db_resize(db *d, uint32_t size);
+uint32_t db_count_mem(db *d);
 
 #endif

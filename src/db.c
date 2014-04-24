@@ -10,12 +10,10 @@
 
 /*Init a db*/
 void db_init(db *d) {
-    int i;
+    d->ht[0] = ht_create();
+    d->ht[1] = NULL;
 
-    for (i = 0;i < 2;i++) {
-        d->ht[i] = ht_create();
-    }
-    if (d->ht[0] && d->ht[1]) {
+    if (d->ht[0]) {
         /*Set init value*/
         d->is_rehash = 0;
         d->rehash_index = 0;
@@ -89,8 +87,8 @@ int db_rehash(db *d, int n) {
     return DB_OK;
 }
 
-/*Rehash the db in n microseconds, each time try 100 step*/
-int db_rehash_microsec(db *d, int n) {
+/*Rehash the db in n milliseconds, each time try 100 step*/
+int db_rehash_millisec(db *d, int n) {
     long long start = micro_time();
 
     while(micro_time() - start < n * 1000) {
@@ -213,4 +211,8 @@ int db_delete_key(db *d, void *key) {
         return DB_OK;
     }
     return DB_ERROR;
+}
+
+/*Count a DB's used memory,count the key/value only*/
+uint32_t db_count_mem(db *d) {
 }
