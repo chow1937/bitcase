@@ -294,3 +294,14 @@ bucket *ht_update(hash_table *ht, void *key, void *value) {
         return NULL;
     }
 }
+
+/*Get next size of a hash table*/
+uint32_t ht_next_size(uint32_t size) {
+    size *= 2;
+
+    if (size < HT_MIN_SIZE)
+        return HT_MIN_SIZE;
+    if (size > HT_MAX_SIZE)
+        return HT_MAX_SIZE;
+    return size;
+}

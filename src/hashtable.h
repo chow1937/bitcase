@@ -7,6 +7,7 @@
 
 /*HashTable minimum size*/
 #define HT_MIN_SIZE 4
+#define HT_MAX_SIZE 1073741824
 /*Hash function seed*/
 #define HT_SEED 0x51203344
 
@@ -41,5 +42,6 @@ bucket *ht_add(hash_table *ht, void *key, void *value);
 int ht_delete(hash_table *ht, void *key);
 bucket *ht_update(hash_table *ht, void *key, void *value);
 uint32_t ht_gen_hash(const void *key);
+uint32_t ht_next_size(uint32_t size);
 
 #endif
