@@ -26,6 +26,7 @@ int db_add_key(db *d, void *key, void *value);
 int db_update_key(db *d, void *key, void *value);
 int db_delete_key(db *d, void *key);
 int db_rehash(db *d, int n);
+int db_rehash_microsec(db *d, int n);
 int db_resize(db *d, uint32_t size);
 
 #endif

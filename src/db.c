@@ -6,6 +6,7 @@
 #include "hashtable.h"
 #include "db.h"
 #include "lru.h"
+#include "bitcase.h"
 
 /*Init a db*/
 void db_init(db *d) {
@@ -88,6 +89,20 @@ int db_rehash(db *d, int n) {
     return DB_OK;
 }
 
+/*Rehash the db in n microseconds, each time try 100 step*/
+int db_rehash_microsec(db *d, int n) {
+    long long start = micro_time();
+
+    while(micro_time() - start < n * 1000) {
+        if (db_rehash(d, 100) == DB_ERROR) {
+            fprintf(stderr, "Rehash error");
+            break;
+        }
+    }
+
+    return DB_OK;
+}
+
 /*Reduce or expand the db*/
 int db_resize(db *d, uint32_t size) {
     int rv;
@@ -159,7 +174,6 @@ int db_add_key(db *d, void *key, void *value) {
 int db_update_key(db *d, void *key, void *value) {
     bucket *bk;
     hash_table *ht;
-    uint32_t mem_len, old_mem_len;
 
     /*Choose the correct hashtable*/
     if (d->is_rehash) {
