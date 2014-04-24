@@ -7,30 +7,31 @@
 #include "cmd.h"
 #include "bitcase.h"
 
+/*Init the server commands table*/
+int cmd_init_commands(void) {
+    if (ht_alloc(server.commands, CMD_TABLE_SIZE) == HT_OK) {
+        /*Add commands into the server.commands hashtable*/
+        ht_add(server.commands, "get", cmd_get_proc);
+        ht_add(server.commands, "set", cmd_set_proc);
+        ht_add(server.commands, "delete", cmd_delete_proc);
+        ht_add(server.commands, "update", cmd_update_proc);
+
+        return CMD_OK;
+    }
+
+    return CMD_ERROR;
+}
+
 /*Set command process function to a cmd*/
 int cmd_proc(cmd *c, char *cmd_name) {
-    /*Command get*/
-    if (strcmp(cmd_name, "get")) {
-        c->proc = cmd_get_proc;
-        return CMD_OK;
-    }
+    /*Find the process function in server.commands hashtable*/
+    bucket *bk = ht_find(server.commands, cmd_name);
 
-    /*Command set*/
-    if (strcmp(cmd_name, "set")) {
-        c->proc = cmd_set_proc;
-        return CMD_OK;
-    }
-
-    /*Command delete*/
-    if (strcmp(cmd_name, "delete")) {
-        c->proc = cmd_delete_proc;
-        return CMD_OK;
-    }
-
-    /*Command update*/
-    if (strcmp(cmd_name, "update")) {
-        c->proc = cmd_update_proc;
-        return CMD_OK;
+    if (bk) {
+        if (bk->value) {
+            c->proc = bk->value;
+            return CMD_OK;
+        }
     }
 
     fprintf(stderr, "No such command:%s", cmd_name);
