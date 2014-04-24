@@ -5,6 +5,9 @@
 #define CMD_OK 0
 #define CMD_ERROR -1
 
+/*Commands table size*/
+#define CMD_TABLE_SIZE 20
+
 typedef struct cmd cmd;
 typedef int cmd_proc(cmd *c);
 struct cmd {
@@ -20,6 +23,7 @@ struct cmd {
 };
 
 /*APIs*/
+int cmd_init_commands(void);
 int cmd_proc(cmd *c, char *cmd_name);
 cmd *cmd_parser(char *cmd_str);
 int cmd_execute(cmd *c, char *result);
