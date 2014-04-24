@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "hashtable.h"
+#include "db.h"
 #include "lru.h"
+#include "bitcase.h"
 
 /*Init a lru list*/
 int lru_init(lru_list *llist) {
@@ -40,6 +43,20 @@ int attach(lru_list *llist, lru_node *lru) {
 int detach(lru_node *lru) {
     lru->prev->next = lru->next;
     lru->next->prev = lru->prev;
+
+    return LRU_OK;
+}
+
+/*Detach and remove n node from tail*/
+int lru_remove(lru_list *llist, int n) {
+    int i;
+    lru_node *node;
+
+    for (i = 0;i < 100;i++) {
+        node = llist->tail->prev;
+        detach(node);
+        db_delete_key(server.d, node->bk->key);
+    }
 
     return LRU_OK;
 }

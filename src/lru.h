@@ -22,5 +22,6 @@ typedef struct lru_list {
 int lru_init(lru_list *llist);
 int attach(lru_list *llist, lru_node *node);
 int detach(lru_node *node);
+int lru_remove(lru_list *llist, int n);
 
 #endif
