@@ -213,6 +213,7 @@ bucket *ht_add(hash_table *ht, void *key, void *value) {
     /*Apply key and value to the new bucket*/
     new->key = key;
     new->value = value;
+    new->lru = NULL;
 
     ht->table[index] = new;
     ht->used++;
