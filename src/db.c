@@ -215,4 +215,42 @@ int db_delete_key(db *d, void *key) {
 
 /*Count a DB's used memory,count the key/value only*/
 uint32_t db_count_mem(db *d) {
+    int i, j;
+    uint32_t used = 0;
+    bucket *head, *next;
+    hash_table *ht;
+
+    if (d->is_rehash) {
+        /*If the DB is rehashing,count both ht[0] and ht[1]*/
+        for (i = 0;i < 2;i++) {
+            ht = d->ht[i];
+            for (j = 0;j < ht->size;j++) {
+                head = ht->table[j];
+                /*Iter the bucket list*/
+                while (head) {
+                    next = head->next;
+                    used += strlen(head->key);
+                    used += strlen(head->value);
+
+                    head = next;
+                }
+            }
+        }
+    } else {
+        /*Count the ht[0] only*/
+        ht = d->ht[0];
+        for (j = 0;j < ht->size;j++) {
+            head = ht->table[j];
+            /*Iter the bucket list*/
+            while (head) {
+                next = head->next;
+                used += strlen(head->key);
+                used += strlen(head->value);
+
+                head = next;
+            }
+        }
+    }
+
+    return used;
 }
