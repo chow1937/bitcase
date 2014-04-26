@@ -1,10 +1,5 @@
-PROJECT(bitcase c)
+PROJECT(bitcase)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-
-# Add find modules
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-    ${CMAKE_SOURCE_DIR}/cmake/modules/)
 
 # Add source dirs
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(tests)

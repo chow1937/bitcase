@@ -6,7 +6,7 @@ SOURCE_DIR = $(CURDIR)
 all: build
 
 prepare:
-	mkdir -p $(BULID_DIR)
+	mkdir -p $(BUILD_DIR)
 	cd $(BUILD_DIR); $(CMAKE) $(CMAKE_VARS) $(CURDIR)
 
 build: prepare
