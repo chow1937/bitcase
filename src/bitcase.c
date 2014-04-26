@@ -124,27 +124,37 @@ static void init_server(void) {
     }
 }
 
+/*Start cron jobs*/
+static void start_cron(void) {
+    uv_timer_t *resize_timer;
+    uv_timer_t *rehash_timer;
+    uv_timer_t *mem_count_timer;
+
+    /*Malloc memory*/
+    resize_timer = (uv_timer_t*)malloc(sizeof(uv_timer_t));
+    rehash_timer = (uv_timer_t*)malloc(sizeof(uv_timer_t));
+    mem_count_timer = (uv_timer_t*)malloc(sizeof(uv_timer_t));
+
+    /*Init these timers*/
+    uv_timer_init(server.loop, resize_timer);
+    uv_timer_init(server.loop, rehash_timer);
+    uv_timer_init(server.loop, mem_count_timer);
+
+    /*Start these timers*/
+    uv_timer_start(resize_timer, cron_check_resize, 5000, RESIZE_INTERVAL);
+    uv_timer_start(rehash_timer, cron_rehash, 5000, REHASH_INTERVAL);
+    uv_timer_start(mem_count_timer, cron_count_memory, 5000,
+                       MEM_COUNT_INTERVAL);
+
+}
+
 
 int main(int argc, char **argv) {
     int errno;
 
     /*Init server and start cron jobs*/
     init_server();
-
-    uv_timer_t resize_timer;
-    uv_timer_t rehash_timer;
-    uv_timer_t mem_count_timer;
-
-    /*Init these timers*/
-    uv_timer_init(server.loop, &resize_timer);
-    uv_timer_init(server.loop, &rehash_timer);
-    uv_timer_init(server.loop, &mem_count_timer);
-
-    /*Start these timers*/
-    uv_timer_start(&resize_timer, cron_check_resize, 5000, RESIZE_INTERVAL);
-    uv_timer_start(&rehash_timer, cron_rehash, 5000, REHASH_INTERVAL);
-    uv_timer_start(&mem_count_timer, cron_count_memory, 5000,
-                       MEM_COUNT_INTERVAL);
+    start_cron();
 
     /*Server start to listen connections*/
     errno = uv_listen((uv_stream_t*)server.stream, 128, on_connection);
