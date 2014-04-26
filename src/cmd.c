@@ -37,7 +37,7 @@ int cmd_set_procfun(cmd *c, char *cmd_name) {
         }
     }
 
-    fprintf(stderr, "No such command:%s", cmd_name);
+    fprintf(stderr, "No such command:%s\n", cmd_name);
     return CMD_ERROR;
 }
 
@@ -91,7 +91,7 @@ int cmd_execute(cmd *c, char *result) {
     if (c->proc(c) == CMD_OK) {
         result = (char*)malloc(strlen(c->result)*sizeof(char));
         if (result == NULL)  {
-            fprintf(stderr, "Memory alloc error");
+            fprintf(stderr, "Memory alloc error\n");
             return CMD_ERROR;
         }
         strcpy(result, c->result);
@@ -123,7 +123,7 @@ int cmd_get_proc(cmd *c) {
 
     /*Command get has 1 arg*/
     if (c->argc != 1) {
-        fprintf(stderr, "Command get only accept 1 arg");
+        fprintf(stderr, "Command get only accept 1 arg\n");
         c->result = (void*)malloc(strlen(err_str)*sizeof(char));
         strcpy(c->result, err_str);
         return CMD_ERROR;
@@ -143,7 +143,7 @@ int cmd_set_proc(cmd *c) {
 
     /*Command set has 2 args*/
     if (c->argc != 2) {
-        fprintf(stderr, "Command set only accept 2 args");
+        fprintf(stderr, "Command set only accept 2 args\n");
         c->result = (void*)malloc(strlen(err_str)*sizeof(char));
         strcpy(c->result, err_str);
         return CMD_ERROR;
@@ -165,7 +165,7 @@ int cmd_delete_proc(cmd *c) {
 
     /*Command delete has 1 arg*/
     if (c->argc != 1) {
-        fprintf(stderr, "Command delete only accept 1 arg");
+        fprintf(stderr, "Command delete only accept 1 arg\n");
         c->result = (void*)malloc(strlen(err_str)*sizeof(char));
         strcpy(c->result, err_str);
         return CMD_ERROR;
@@ -187,7 +187,7 @@ int cmd_update_proc(cmd *c) {
 
     /*Command update has 2 args*/
     if (c->argc != 2) {
-        fprintf(stderr, "Command update only accept 2 args");
+        fprintf(stderr, "Command update only accept 2 args\n");
         c->result = (void*)malloc(strlen(err_str)*sizeof(char));
         strcpy(c->result, err_str);
         return CMD_ERROR;

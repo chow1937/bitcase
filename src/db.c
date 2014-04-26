@@ -35,7 +35,7 @@ db *db_create(void) {
         db_init(d);
         return d;
     } else {
-        fprintf(stderr, "DB create error,not enouth memory");
+        fprintf(stderr, "DB create error,not enouth memory\n");
         return NULL;
     }
 }
@@ -46,7 +46,7 @@ int db_rehash(db *d, int n) {
     uint32_t hash, index;
 
     if (!d->is_rehash) {
-        fprintf(stderr, "DB is not in rehashing now");
+        fprintf(stderr, "DB is not in rehashing now\n");
         return DB_ERROR;
     }
 
@@ -94,8 +94,8 @@ int db_rehash_millisec(db *d, int n) {
 
     while(micro_time() - start < n * 1000) {
         if (db_rehash(d, 100) == DB_ERROR) {
-            fprintf(stderr, "Rehash error");
-            break;
+            fprintf(stderr, "Rehash error\n");
+            return DB_ERROR;
         }
     }
 
@@ -115,7 +115,7 @@ int db_resize(db *d, uint32_t size) {
         return DB_OK;
     }
 
-    fprintf(stderr, "Hash table alloc error");
+    fprintf(stderr, "Hash table alloc error\n");
     return DB_ERROR;
 }
 
@@ -162,7 +162,7 @@ int db_add_key(db *d, void *key, void *value) {
         bk->lru->bk = bk;
         attach(d->llist, bk->lru);
     } else {
-        fprintf(stderr, "Alloc memory for lru node error");
+        fprintf(stderr, "Alloc memory for lru node error\n");
         return DB_ERROR;
     }
 
