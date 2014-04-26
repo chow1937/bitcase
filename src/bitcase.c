@@ -124,8 +124,13 @@ static void init_server(void) {
     }
 }
 
-/*Start to execute cron jobs*/
-static void start_cron(void) {
+
+int main(int argc, char **argv) {
+    int errno;
+
+    /*Init server and start cron jobs*/
+    init_server();
+
     uv_timer_t resize_timer;
     uv_timer_t rehash_timer;
     uv_timer_t mem_count_timer;
@@ -139,16 +144,7 @@ static void start_cron(void) {
     uv_timer_start(&resize_timer, cron_check_resize, 5000, RESIZE_INTERVAL);
     uv_timer_start(&rehash_timer, cron_rehash, 5000, REHASH_INTERVAL);
     uv_timer_start(&mem_count_timer, cron_count_memory, 5000,
-            MEM_COUNT_INTERVAL);
-}
-
-
-int main(int argc, char **argv) {
-    int errno;
-
-    /*Init server and start cron jobs*/
-    init_server();
-    start_cron();
+                       MEM_COUNT_INTERVAL);
 
     /*Server start to listen connections*/
     errno = uv_listen((uv_stream_t*)server.stream, 128, on_connection);
