@@ -23,6 +23,9 @@ void cron_check_resize(uv_timer_t* handle, int status) {
     used = server.d->ht[0]->used;
     size = server.d->ht[0]->size;
 
+    /*If just start,don't resize*/
+    if (used == 0) return;
+
     /*If the radio less than %10,reduce the hashtable*/
     if (100 * used / size < DB_REDUCE_RATIO) {
         db_resize(server.d, used);
