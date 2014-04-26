@@ -108,7 +108,7 @@ int db_resize(db *d, uint32_t size) {
     hash_table *ht;
 
     rv = ht_alloc(ht, size);
-    if (rv == 0) {
+    if (rv == HT_OK) {
         d->ht[1] = ht;
         d->is_rehash = 1;
 
