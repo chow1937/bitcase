@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <uv.h>
 
 #include "hashtable.h"
 #include "db.h"

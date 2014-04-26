@@ -8,7 +8,7 @@
 /*Server configure*/
 #define BC_PORT 8638
 
-typedef struct server {
+struct server_t {
     /*Server event loop*/
     uv_loop_t *loop;
     /*Server stream*/
@@ -19,10 +19,10 @@ typedef struct server {
     db *d;
     /*Command hashtable*/
     hash_table *commands;
-} server_t;
+};
 
 /*----Extern variables---*/
-extern server_t server;
+extern struct server_t server;
 
 /*Helper functions*/
 long long micro_time(void);

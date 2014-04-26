@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
+#include <uv.h>
 
 #include "hashtable.h"
 #include "db.h"
@@ -9,6 +11,7 @@
 
 /*Init the server commands table*/
 int cmd_init_commands(void) {
+    server.commands = (hash_table*)malloc(sizeof(hash_table));
     if (ht_alloc(server.commands, CMD_TABLE_SIZE) == HT_OK) {
         /*Add commands into the server.commands hashtable*/
         ht_add(server.commands, "get", cmd_get_proc);
@@ -23,7 +26,7 @@ int cmd_init_commands(void) {
 }
 
 /*Set command process function to a cmd*/
-int cmd_proc(cmd *c, char *cmd_name) {
+int cmd_set_procfun(cmd *c, char *cmd_name) {
     /*Find the process function in server.commands hashtable*/
     bucket *bk = ht_find(server.commands, cmd_name);
 
@@ -72,7 +75,7 @@ cmd *cmd_parser(char *cmd_str) {
         strncpy(c->argv[i], line+2, len);
         c->argv[i][len] = '\0';
     }
-    if (cmd_proc(c, cmd_name) == CMD_OK) {
+    if (cmd_set_procfun(c, cmd_name) == CMD_OK) {
         c->d = server.d;
         free(cmd_name);
 

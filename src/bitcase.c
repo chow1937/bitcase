@@ -3,12 +3,16 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 #include <uv.h>
 
+#include "hashtable.h"
 #include "db.h"
 #include "cmd.h"
 #include "bitcase.h"
 #include "cron.h"
+
+struct server_t server;
 
 /*----Helper functions--*/
 
@@ -33,20 +37,24 @@ uv_buf_t alloc_buffer(uv_handle_t* handle, size_t suggested_size) {
 static void after_response(uv_write_t* req, int status) {
     if (req) {
         /*Close the client stream*/
-        uv_close((uv_handle_t*)req->data, NULL);
+        uv_close((uv_handle_t*)req->handle, NULL);
+
+        /*Free the buf and response*/
+        uv_buf_t *buf = (uv_buf_t*)req->data;
+        free(buf->base);
         free(req);
     }
 }
 
 /*Send response to client*/
-static void send_response(uv_stream_t *client, uv_buf_t buf) {
+static void send_response(uv_stream_t *client, uv_buf_t *buf) {
     uv_write_t *response;
 
     response = (uv_write_t*)malloc(sizeof(uv_write_t));
-    response->data = (void*)client;
+    response->data = buf;
 
     /*Write to client stream*/
-    uv_write(response, client, &buf, 1, after_response);
+    uv_write(response, client, buf, 1, after_response);
 }
 
 /*Request read callback*/
@@ -65,7 +73,7 @@ static void after_read(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
         c = cmd_parser((char*)buf.base);
         if (cmd_execute(c, result) == CMD_OK) {
             response_buf = uv_buf_init(result, strlen(result));
-            send_response(stream, response_buf);
+            send_response(stream, &response_buf);
         }
     }
     /*Release the buffer memory if used*/
@@ -94,6 +102,7 @@ static void on_connection(uv_stream_t* stream, int status) {
 static void init_server(void) {
     /*Init the server loop and server stream*/
     server.loop = uv_default_loop();
+    server.stream = (uv_tcp_t*)malloc(sizeof(uv_tcp_t));
     if (uv_tcp_init(server.loop, server.stream)) {
         fprintf(stderr, "Socket create error\n");
         return;
@@ -107,6 +116,7 @@ static void init_server(void) {
     }
 
     /*Init DB and command table*/
+    server.d = (db*)malloc(sizeof(db));
     db_init(server.d);
     if (cmd_init_commands() == CMD_ERROR) {
         fprintf(stderr, "Command table init error");

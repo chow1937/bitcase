@@ -38,12 +38,14 @@ uint32_t MurmurHash3(const void *key, int len, uint32_t seed) {
     uint32_t c1 = 0xcc9e2d51;
     uint32_t c2 = 0x1b873593;
 
+    int i;
+
     //----------
     // body
 
     const uint32_t * blocks = (const uint32_t *)(data + nblocks*4);
 
-    for(int i = -nblocks; i; i++) {
+    for(i = -nblocks; i; i++) {
         uint32_t k1 = blocks[i];
 
         k1 *= c1;
@@ -158,7 +160,6 @@ int ht_alloc(hash_table *ht, unsigned long size) {
 
     /*Alloc memory*/
     ht->table = (bucket**)malloc(real_size*sizeof(bucket*));
-    memset(ht->table, '\0', real_size);
 
     if (ht->table) {
         return HT_OK; 
@@ -172,7 +173,6 @@ int ht_alloc(hash_table *ht, unsigned long size) {
 hash_table *ht_create(void) {
     /*Alloc memory*/
     hash_table *ht = (hash_table*)malloc(sizeof(hash_table));
-    memset(ht, '\0', sizeof(hash_table));
     if (ht == NULL) {
         fprintf(stderr, "Memory malloc error\n");
     }
