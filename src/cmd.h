@@ -26,7 +26,7 @@ struct cmd {
 int cmd_init_commands(void);
 int cmd_set_procfun(cmd *c, char *cmd_name);
 cmd *cmd_parser(char *cmd_str);
-int cmd_execute(cmd *c, char *result);
+int cmd_execute(cmd *c);
 int cmd_free(cmd *c);
 
 /*Command process functions*/

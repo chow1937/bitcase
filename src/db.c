@@ -19,6 +19,7 @@ void db_init(db *d) {
         d->is_rehash = 0;
         d->rehash_index = 0;
         d->mem_limit = DB_MAX_MEM;
+        d->llist = (lru_list*)malloc(sizeof(lru_list));
         /*Init the LRU list*/
         lru_init(d->llist);
     } else {
@@ -131,7 +132,7 @@ bucket *db_get_key(db *d, void *key) {
             if (bk) break;
         }
     } else {
-        bk = ht_find(d->ht[i], key);
+        bk = ht_find(d->ht[0], key);
     }
 
     if (bk) {
@@ -146,6 +147,14 @@ bucket *db_get_key(db *d, void *key) {
 int db_add_key(db *d, void *key, void *value) {
     bucket *bk;
     hash_table *ht;
+    char *bk_key, *bk_value;
+
+    /*Alloc memory,these are the really used*/
+    bk_key = (char*)malloc(sizeof(key));
+    bk_value = (char*)malloc(sizeof(value));
+    /*Copy the command argv*/
+    strcpy(bk_key, key);
+    strcpy(bk_value, value);
 
     /*Choose the correct hashtable*/
     if (d->is_rehash) {
@@ -155,14 +164,18 @@ int db_add_key(db *d, void *key, void *value) {
     }
 
     /*Add the key to the hash table and attach the LRU node*/
-    bk = ht_add(ht, key, value);
-    bk->lru = (lru_node*)malloc(sizeof(lru_node));
-    if (bk->lru) {
-        /*Attach the bucket's lru node to lru list*/
-        bk->lru->bk = bk;
-        attach(d->llist, bk->lru);
+    bk = ht_add(ht, bk_key, bk_value);
+    if (bk) {
+        bk->lru = (lru_node*)malloc(sizeof(lru_node));
+        if (bk->lru) {
+            /*Attach the bucket's lru node to lru list*/
+            bk->lru->bk = bk;
+            attach(d->llist, bk->lru);
+        } else {
+            fprintf(stderr, "Alloc memory for lru node error\n");
+            return DB_ERROR;
+        }
     } else {
-        fprintf(stderr, "Alloc memory for lru node error\n");
         return DB_ERROR;
     }
 
@@ -173,6 +186,12 @@ int db_add_key(db *d, void *key, void *value) {
 int db_update_key(db *d, void *key, void *value) {
     bucket *bk;
     hash_table *ht;
+    char *bk_value;
+
+    /*Alloc memory for value,he really used*/
+    bk_value = (char*)malloc(sizeof(value));
+    /*Copy the command argv*/
+    strcpy(bk_value, value);
 
     /*Choose the correct hashtable*/
     if (d->is_rehash) {
@@ -181,33 +200,31 @@ int db_update_key(db *d, void *key, void *value) {
         ht = d->ht[0];
     }
 
-    bk = ht_update(ht, key, value);
+    bk = ht_update(ht, key, bk_value);
     if (bk) {
         detach(bk->lru);
         attach(d->llist, bk->lru);
 
         return DB_OK;
-    } else {
-        /*If key not found in the DB,add the kye/value to the DB*/
-        db_add_key(d, key, value);
-
-        return DB_OK;
     }
+
+    return DB_ERROR;
 }
 
 /*Delete a bucket by key*/
 int db_delete_key(db *d, void *key) {
     int i, rv;
-    hash_table *ht;
 
     /*Choose the correct hashtable*/
     if (d->is_rehash) {
-        ht = d->ht[1];
+        for(i = 0;i < 2;i++) {
+            rv = ht_delete(d->ht[i], key);
+            if (rv==HT_OK) break;
+        }
     } else {
-        ht = d->ht[0];
+        rv = ht_delete(d->ht[0], key);
     }
 
-    rv = ht_delete(ht, key);
     if (rv == HT_OK) {
         return DB_OK;
     }

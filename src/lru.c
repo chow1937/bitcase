@@ -9,7 +9,6 @@
 
 /*Init a lru list*/
 int lru_init(lru_list *llist) {
-    llist = (lru_list*)malloc(sizeof(lru_list));
     if (llist) {
         llist->head = (lru_node*)malloc(sizeof(lru_node));
         llist->tail = (lru_node*)malloc(sizeof(lru_node));
@@ -19,6 +18,10 @@ int lru_init(lru_list *llist) {
             llist->head->next = llist->tail;
             llist->tail->prev = llist->head;
             llist->tail->next = NULL;
+
+            /*Set the head and tail node bk to NULL*/
+            llist->head->bk = NULL;
+            llist->tail->bk = NULL;
 
             return LRU_OK;
         }

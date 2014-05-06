@@ -59,7 +59,6 @@ cmd *cmd_parser(char *cmd_str) {
     /*Then get the arg amount*/
     tmp = line + 2;
     line = strstr(tmp, "\r\n");
-    len = line - tmp;
     /*Usually no more than 9*/
     argc = tmp[0] - '0';
 
@@ -72,7 +71,7 @@ cmd *cmd_parser(char *cmd_str) {
         line = strstr(tmp, "\r\n");
         len = line - tmp;
         c->argv[i] = (char*)malloc((len+1)*sizeof(char));
-        strncpy(c->argv[i], line+2, len);
+        strncpy(c->argv[i], tmp, len);
         c->argv[i][len] = '\0';
     }
     if (cmd_set_procfun(c, cmd_name) == CMD_OK) {
@@ -86,21 +85,9 @@ cmd *cmd_parser(char *cmd_str) {
 }
 
 /*Execute the command*/
-int cmd_execute(cmd *c, char *result) {
+int cmd_execute(cmd *c) {
     /*Just invoke the proc function in the cmd*/
-    if (c->proc(c) == CMD_OK) {
-        result = (char*)malloc(strlen(c->result)*sizeof(char));
-        if (result == NULL)  {
-            fprintf(stderr, "Memory alloc error\n");
-            return CMD_ERROR;
-        }
-        strcpy(result, c->result);
-        cmd_free(c);
-
-        return CMD_OK;
-    }
-
-    return CMD_ERROR;
+    return c->proc(c);
 }
 
 /*Free a cmd,release it's memory*/
@@ -120,18 +107,26 @@ int cmd_free(cmd *c) {
 int cmd_get_proc(cmd *c) {
     bucket *bk;
     char *err_str = "Wrong arg number for command GET,accept only 1";
+    char *fail_str = "Key not exists";
 
     /*Command get has 1 arg*/
     if (c->argc != 1) {
-        fprintf(stderr, "Command get only accept 1 arg\n");
+        fprintf(stderr, "Command get only accept 1 arg,got %d\n", c->argc);
         c->result = (void*)malloc(strlen(err_str)*sizeof(char));
         strcpy(c->result, err_str);
         return CMD_ERROR;
     }
 
     bk = db_get_key(c->d, (void*)c->argv[0]);
-    c->result = (void*)malloc(strlen(bk->value)*sizeof(char));
-    strcpy(c->result, bk->value);
+    if (bk) {
+        c->result = (void*)malloc(strlen(bk->value)*sizeof(char));
+        strcpy(c->result, bk->value);
+    } else {
+        /*Get key fail,return fail info*/
+        c->result = (void*)malloc(strlen(fail_str));
+        strcpy(c->result, fail_str);
+        return CMD_ERROR;
+    }
 
     return CMD_OK;
 }
@@ -140,6 +135,7 @@ int cmd_get_proc(cmd *c) {
 int cmd_set_proc(cmd *c) {
     char *ok_str = "OK";
     char *err_str = "Wrong arg number for command SET,accept only 2";
+    char *fail_str = "key exists,add fail";
 
     /*Command set has 2 args*/
     if (c->argc != 2) {
@@ -150,9 +146,14 @@ int cmd_set_proc(cmd *c) {
     }
 
     if (db_add_key(c->d, (void*)c->argv[0], (void*)c->argv[1]) == DB_OK) {
+        /*Add key success, return success info*/
         c->result = (void*)malloc(strlen(ok_str)*sizeof(char));
         strcpy(c->result, ok_str);
         return CMD_OK;
+    } else {
+        /*Key exists, return fail info*/
+        c->result = (void*)malloc(strlen(fail_str)*sizeof(char));
+        strcpy(c->result, fail_str);
     }
 
     return CMD_ERROR;
@@ -162,6 +163,7 @@ int cmd_set_proc(cmd *c) {
 int cmd_delete_proc(cmd *c) {
     char *ok_str = "OK";
     char *err_str = "Wrong arg number for command DELETE,accept only 1";
+    char *fail_str = "Key not exists";
 
     /*Command delete has 1 arg*/
     if (c->argc != 1) {
@@ -173,17 +175,22 @@ int cmd_delete_proc(cmd *c) {
 
     if (db_delete_key(c->d, c->argv[0]) == DB_OK) {
         c->result = (void*)malloc(strlen(ok_str)*sizeof(char));
-        strcpy(c->result, err_str);
+        strcpy(c->result, ok_str);
         return CMD_OK;
+    } else {
+        /*Delete key error,not exists,return fail info*/
+        c->result = (void*)malloc(strlen(fail_str)*sizeof(char));
+        strcpy(c->result, fail_str);
     }
 
     return CMD_ERROR;
-};
+}
 
 /*Process the udpate command*/
 int cmd_update_proc(cmd *c) {
     char *ok_str = "OK";
     char *err_str = "Wrong arg number for command UPDATE,accpet only 2";
+    char *fail_str = "Key not exists";
 
     /*Command update has 2 args*/
     if (c->argc != 2) {
@@ -197,6 +204,10 @@ int cmd_update_proc(cmd *c) {
         c->result = (void*)malloc(strlen(ok_str)*sizeof(char));
         strcpy(c->result, ok_str);
         return CMD_OK;
+    } else {
+        /*Update error,key not exists,return fail info*/
+        c->result = (void*)malloc(strlen(fail_str)*sizeof(char));
+        strcpy(c->result, fail_str);
     }
 
     return CMD_ERROR;

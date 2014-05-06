@@ -37,11 +37,7 @@ uv_buf_t alloc_buffer(uv_handle_t* handle, size_t suggested_size) {
 static void after_response(uv_write_t* req, int status) {
     if (req) {
         /*Close the client stream*/
-        uv_close((uv_handle_t*)req->handle, NULL);
-
-        /*Free the buf and response*/
-        uv_buf_t *buf = (uv_buf_t*)req->data;
-        free(buf->base);
+        uv_close((uv_handle_t*)req->data, NULL);
         free(req);
     }
 }
@@ -51,7 +47,7 @@ static void send_response(uv_stream_t *client, uv_buf_t *buf) {
     uv_write_t *response;
 
     response = (uv_write_t*)malloc(sizeof(uv_write_t));
-    response->data = buf;
+    response->data = (void*)client;
 
     /*Write to client stream*/
     uv_write(response, client, buf, 1, after_response);
@@ -67,14 +63,18 @@ static void after_read(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
         uv_close((uv_handle_t*)stream, NULL);
     } else if (nread > 0) {
         cmd *c;
-        char *result;
+        char *tmp_buf;
         uv_buf_t response_buf;
 
         c = cmd_parser((char*)buf.base);
-        if (cmd_execute(c, result) == CMD_OK) {
-            response_buf = uv_buf_init(result, strlen(result));
-            send_response(stream, &response_buf);
-        }
+        cmd_execute(c);
+
+        /*Send response*/
+        tmp_buf = (char*)malloc(sizeof(c->result));
+        strcpy(tmp_buf, c->result);
+        cmd_free(c);
+        response_buf = uv_buf_init(tmp_buf, strlen(tmp_buf));
+        send_response(stream, &response_buf);
     }
     /*Release the buffer memory if used*/
     if (buf.base) {

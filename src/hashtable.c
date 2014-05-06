@@ -234,7 +234,6 @@ int ht_delete(hash_table *ht, void *key) {
     ptr = ht->table[index];
     if (ptr == NULL) {
         /*Key not exists in this hashtable,return HT_ERROR*/
-        fprintf(stderr, "Delete error,key %s not exists\n", (char*)key);
         return HT_ERROR;
     }
 
@@ -287,11 +286,11 @@ bucket *ht_update(hash_table *ht, void *key, void *value) {
 
     bk = ht_find(ht, key);
     if (bk) {
+        free(bk->value);
         bk->value = value;
 
         return bk;
     } else {
-        fprintf(stderr, "Update error, key %s not exists\n", (char*)key);
         return NULL;
     }
 }
