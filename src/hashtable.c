@@ -5,6 +5,7 @@
 
 #include "lru.h"
 #include "hashtable.h"
+#include "bcmem.h"
 
 /*----Hash function and it's helper functions----*/
 
@@ -101,10 +102,10 @@ uint32_t ht_gen_hash(const void *key) {
 int ht_free_bucket(bucket *bk) {
     /*Detach the bucket lru node first*/
     detach(bk->lru);
-    free(bk->lru);
-    free(bk->key);
-    free(bk->value);
-    free(bk);
+    bc_free(bk->lru);
+    bc_free(bk->key);
+    bc_free(bk->value);
+    bc_free(bk);
 
     return HT_OK;
 }
@@ -137,7 +138,7 @@ int ht_clear(hash_table *ht) {
         }
     }
 
-    free(ht->table);
+    bc_free(ht->table);
     ht_reset(ht);
 
     return HT_OK;
@@ -159,7 +160,7 @@ int ht_alloc(hash_table *ht, unsigned long size) {
     ht->used = 0;
 
     /*Alloc memory*/
-    ht->table = (bucket**)malloc(real_size*sizeof(bucket*));
+    ht->table = (bucket**)bc_malloc(real_size*sizeof(bucket*));
 
     if (ht->table) {
         return HT_OK; 
@@ -172,7 +173,7 @@ int ht_alloc(hash_table *ht, unsigned long size) {
 /*Create a new hashtable*/
 hash_table *ht_create(void) {
     /*Alloc memory*/
-    hash_table *ht = (hash_table*)malloc(sizeof(hash_table));
+    hash_table *ht = (hash_table*)bc_malloc(sizeof(hash_table));
     if (ht == NULL) {
         fprintf(stderr, "Memory malloc error\n");
     }
@@ -208,7 +209,7 @@ bucket *ht_add(hash_table *ht, void *key, void *value) {
         head = tmp;
     }
 
-    new = (bucket*)malloc(sizeof(bucket));
+    new = (bucket*)bc_malloc(sizeof(bucket));
     new->next = head;
     /*Apply key and value to the new bucket*/
     new->key = key;
@@ -286,7 +287,7 @@ bucket *ht_update(hash_table *ht, void *key, void *value) {
 
     bk = ht_find(ht, key);
     if (bk) {
-        free(bk->value);
+        bc_free(bk->value);
         bk->value = value;
 
         return bk;

@@ -11,6 +11,7 @@
 #include "cmd.h"
 #include "bitcase.h"
 #include "cron.h"
+#include "bcmem.h"
 
 struct server_t server;
 
@@ -30,7 +31,7 @@ long long micro_time(void) {
 
 /*Buffer allocation callback*/
 uv_buf_t alloc_buffer(uv_handle_t* handle, size_t suggested_size) {
-    return uv_buf_init((char*)malloc(suggested_size), suggested_size);
+    return uv_buf_init((char*)bc_malloc(suggested_size), suggested_size);
 }
 
 /*Response write callback*/
@@ -38,7 +39,7 @@ static void after_response(uv_write_t* req, int status) {
     if (req) {
         /*Close the client stream*/
         uv_close((uv_handle_t*)req->data, NULL);
-        free(req);
+        bc_free(req);
     }
 }
 
@@ -46,7 +47,7 @@ static void after_response(uv_write_t* req, int status) {
 static void send_response(uv_stream_t *client, uv_buf_t *buf) {
     uv_write_t *response;
 
-    response = (uv_write_t*)malloc(sizeof(uv_write_t));
+    response = (uv_write_t*)bc_malloc(sizeof(uv_write_t));
     response->data = (void*)client;
 
     /*Write to client stream*/
@@ -70,7 +71,7 @@ static void after_read(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
         cmd_execute(c);
 
         /*Send response*/
-        tmp_buf = (char*)malloc(sizeof(c->result));
+        tmp_buf = (char*)bc_malloc(sizeof(c->result));
         strcpy(tmp_buf, c->result);
         cmd_free(c);
         response_buf = uv_buf_init(tmp_buf, strlen(tmp_buf));
@@ -78,7 +79,7 @@ static void after_read(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
     }
     /*Release the buffer memory if used*/
     if (buf.base) {
-        free(buf.base);
+        bc_free(buf.base);
     }
 }
 
@@ -88,7 +89,7 @@ static void on_connection(uv_stream_t* stream, int status) {
         return;
     }
     /*Init the client stream*/
-    uv_tcp_t *client = (uv_tcp_t*)malloc(sizeof(uv_tcp_t));
+    uv_tcp_t *client = (uv_tcp_t*)bc_malloc(sizeof(uv_tcp_t));
     uv_tcp_init(server.loop, client);
     /*Accept the connection,start to read or close the client stream*/
     if (uv_accept(stream, (uv_stream_t*)client) == 0) {
@@ -102,7 +103,7 @@ static void on_connection(uv_stream_t* stream, int status) {
 static void init_server(void) {
     /*Init the server loop and server stream*/
     server.loop = uv_default_loop();
-    server.stream = (uv_tcp_t*)malloc(sizeof(uv_tcp_t));
+    server.stream = (uv_tcp_t*)bc_malloc(sizeof(uv_tcp_t));
     if (uv_tcp_init(server.loop, server.stream)) {
         fprintf(stderr, "Socket create error\n");
         return;
@@ -116,7 +117,7 @@ static void init_server(void) {
     }
 
     /*Init DB and command table*/
-    server.d = (db*)malloc(sizeof(db));
+    server.d = (db*)bc_malloc(sizeof(db));
     db_init(server.d);
     if (cmd_init_commands() == CMD_ERROR) {
         fprintf(stderr, "Command table init error");
@@ -131,9 +132,9 @@ static void start_cron(void) {
     uv_timer_t *mem_count_timer;
 
     /*Malloc memory*/
-    resize_timer = (uv_timer_t*)malloc(sizeof(uv_timer_t));
-    rehash_timer = (uv_timer_t*)malloc(sizeof(uv_timer_t));
-    mem_count_timer = (uv_timer_t*)malloc(sizeof(uv_timer_t));
+    resize_timer = (uv_timer_t*)bc_malloc(sizeof(uv_timer_t));
+    rehash_timer = (uv_timer_t*)bc_malloc(sizeof(uv_timer_t));
+    mem_count_timer = (uv_timer_t*)bc_malloc(sizeof(uv_timer_t));
 
     /*Init these timers*/
     uv_timer_init(server.loop, resize_timer);

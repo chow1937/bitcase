@@ -8,10 +8,11 @@
 #include "db.h"
 #include "cmd.h"
 #include "bitcase.h"
+#include "bcmem.h"
 
 /*Init the server commands table*/
 int cmd_init_commands(void) {
-    server.commands = (hash_table*)malloc(sizeof(hash_table));
+    server.commands = (hash_table*)bc_malloc(sizeof(hash_table));
     if (ht_alloc(server.commands, CMD_TABLE_SIZE) == HT_OK) {
         /*Add commands into the server.commands hashtable*/
         ht_add(server.commands, "get", cmd_get_proc);
@@ -52,7 +53,7 @@ cmd *cmd_parser(char *cmd_str) {
     /*Parse the command name first*/
     line = strstr(cmd_str, "\r\n");
     len = line - cmd_str;
-    cmd_name = (char*)malloc((len+1)*sizeof(char));
+    cmd_name = (char*)bc_malloc((len+1)*sizeof(char));
     strncpy(cmd_name, cmd_str, len);
     cmd_name[len] = '\0';
 
@@ -62,21 +63,21 @@ cmd *cmd_parser(char *cmd_str) {
     /*Usually no more than 9*/
     argc = tmp[0] - '0';
 
-    c = (cmd*)malloc(sizeof(cmd));
+    c = (cmd*)bc_malloc(sizeof(cmd));
     c->argc = argc;
-    c->argv = (char**)malloc(argc);
+    c->argv = (char**)bc_malloc(argc);
     /*Parse each arg*/
     for (i = 0;i < argc;i++) {
         tmp = line + 2;
         line = strstr(tmp, "\r\n");
         len = line - tmp;
-        c->argv[i] = (char*)malloc((len+1)*sizeof(char));
+        c->argv[i] = (char*)bc_malloc((len+1)*sizeof(char));
         strncpy(c->argv[i], tmp, len);
         c->argv[i][len] = '\0';
     }
     if (cmd_set_procfun(c, cmd_name) == CMD_OK) {
         c->d = server.d;
-        free(cmd_name);
+        bc_free(cmd_name);
 
         return c;
     }
@@ -94,11 +95,11 @@ int cmd_execute(cmd *c) {
 int cmd_free(cmd *c) {
     int i;
 
-    free(c->result);
+    bc_free(c->result);
     for (i = 0;i < c->argc;i++) {
-        free(c->argv[i]);
+        bc_free(c->argv[i]);
     }
-    free(c);
+    bc_free(c);
 
     return CMD_OK;
 }
@@ -112,18 +113,18 @@ int cmd_get_proc(cmd *c) {
     /*Command get has 1 arg*/
     if (c->argc != 1) {
         fprintf(stderr, "Command get only accept 1 arg,got %d\n", c->argc);
-        c->result = (void*)malloc(strlen(err_str)*sizeof(char));
+        c->result = (void*)bc_malloc(strlen(err_str)*sizeof(char));
         strcpy(c->result, err_str);
         return CMD_ERROR;
     }
 
     bk = db_get_key(c->d, (void*)c->argv[0]);
     if (bk) {
-        c->result = (void*)malloc(strlen(bk->value)*sizeof(char));
+        c->result = (void*)bc_malloc(strlen(bk->value)*sizeof(char));
         strcpy(c->result, bk->value);
     } else {
         /*Get key fail,return fail info*/
-        c->result = (void*)malloc(strlen(fail_str));
+        c->result = (void*)bc_malloc(strlen(fail_str));
         strcpy(c->result, fail_str);
         return CMD_ERROR;
     }
@@ -140,19 +141,19 @@ int cmd_set_proc(cmd *c) {
     /*Command set has 2 args*/
     if (c->argc != 2) {
         fprintf(stderr, "Command set only accept 2 args\n");
-        c->result = (void*)malloc(strlen(err_str)*sizeof(char));
+        c->result = (void*)bc_malloc(strlen(err_str)*sizeof(char));
         strcpy(c->result, err_str);
         return CMD_ERROR;
     }
 
     if (db_add_key(c->d, (void*)c->argv[0], (void*)c->argv[1]) == DB_OK) {
         /*Add key success, return success info*/
-        c->result = (void*)malloc(strlen(ok_str)*sizeof(char));
+        c->result = (void*)bc_malloc(strlen(ok_str)*sizeof(char));
         strcpy(c->result, ok_str);
         return CMD_OK;
     } else {
         /*Key exists, return fail info*/
-        c->result = (void*)malloc(strlen(fail_str)*sizeof(char));
+        c->result = (void*)bc_malloc(strlen(fail_str)*sizeof(char));
         strcpy(c->result, fail_str);
     }
 
@@ -168,18 +169,18 @@ int cmd_delete_proc(cmd *c) {
     /*Command delete has 1 arg*/
     if (c->argc != 1) {
         fprintf(stderr, "Command delete only accept 1 arg\n");
-        c->result = (void*)malloc(strlen(err_str)*sizeof(char));
+        c->result = (void*)bc_malloc(strlen(err_str)*sizeof(char));
         strcpy(c->result, err_str);
         return CMD_ERROR;
     }
 
     if (db_delete_key(c->d, c->argv[0]) == DB_OK) {
-        c->result = (void*)malloc(strlen(ok_str)*sizeof(char));
+        c->result = (void*)bc_malloc(strlen(ok_str)*sizeof(char));
         strcpy(c->result, ok_str);
         return CMD_OK;
     } else {
         /*Delete key error,not exists,return fail info*/
-        c->result = (void*)malloc(strlen(fail_str)*sizeof(char));
+        c->result = (void*)bc_malloc(strlen(fail_str)*sizeof(char));
         strcpy(c->result, fail_str);
     }
 
@@ -195,18 +196,18 @@ int cmd_update_proc(cmd *c) {
     /*Command update has 2 args*/
     if (c->argc != 2) {
         fprintf(stderr, "Command update only accept 2 args\n");
-        c->result = (void*)malloc(strlen(err_str)*sizeof(char));
+        c->result = (void*)bc_malloc(strlen(err_str)*sizeof(char));
         strcpy(c->result, err_str);
         return CMD_ERROR;
     }
 
     if (db_update_key(c->d, c->argv[0], c->argv[1]) == DB_OK) {
-        c->result = (void*)malloc(strlen(ok_str)*sizeof(char));
+        c->result = (void*)bc_malloc(strlen(ok_str)*sizeof(char));
         strcpy(c->result, ok_str);
         return CMD_OK;
     } else {
         /*Update error,key not exists,return fail info*/
-        c->result = (void*)malloc(strlen(fail_str)*sizeof(char));
+        c->result = (void*)bc_malloc(strlen(fail_str)*sizeof(char));
         strcpy(c->result, fail_str);
     }
 

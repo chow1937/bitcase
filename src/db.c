@@ -8,6 +8,7 @@
 #include "db.h"
 #include "lru.h"
 #include "bitcase.h"
+#include "bcmem.h"
 
 /*Init a db*/
 void db_init(db *d) {
@@ -19,7 +20,7 @@ void db_init(db *d) {
         d->is_rehash = 0;
         d->rehash_index = 0;
         d->mem_limit = DB_MAX_MEM;
-        d->llist = (lru_list*)malloc(sizeof(lru_list));
+        d->llist = (lru_list*)bc_malloc(sizeof(lru_list));
         /*Init the LRU list*/
         lru_init(d->llist);
     } else {
@@ -31,7 +32,7 @@ void db_init(db *d) {
 db *db_create(void) {
     db *d;
 
-    d = (db*)malloc(sizeof(db));
+    d = (db*)bc_malloc(sizeof(db));
     if (d) {
         db_init(d);
         return d;
@@ -53,7 +54,7 @@ int db_rehash(db *d, int n) {
 
     while (n--) {
         if (d->ht[0]->used == 0) {
-            free(d->ht[0]->table);
+            bc_free(d->ht[0]->table);
             d->ht[0] = d->ht[1];
             ht_reset(d->ht[1]);
             d->is_rehash = 0;
@@ -150,8 +151,8 @@ int db_add_key(db *d, void *key, void *value) {
     char *bk_key, *bk_value;
 
     /*Alloc memory,these are the really used*/
-    bk_key = (char*)malloc(sizeof(key));
-    bk_value = (char*)malloc(sizeof(value));
+    bk_key = (char*)bc_malloc(sizeof(key));
+    bk_value = (char*)bc_malloc(sizeof(value));
     /*Copy the command argv*/
     strcpy(bk_key, key);
     strcpy(bk_value, value);
@@ -166,7 +167,7 @@ int db_add_key(db *d, void *key, void *value) {
     /*Add the key to the hash table and attach the LRU node*/
     bk = ht_add(ht, bk_key, bk_value);
     if (bk) {
-        bk->lru = (lru_node*)malloc(sizeof(lru_node));
+        bk->lru = (lru_node*)bc_malloc(sizeof(lru_node));
         if (bk->lru) {
             /*Attach the bucket's lru node to lru list*/
             bk->lru->bk = bk;
@@ -189,7 +190,7 @@ int db_update_key(db *d, void *key, void *value) {
     char *bk_value;
 
     /*Alloc memory for value,he really used*/
-    bk_value = (char*)malloc(sizeof(value));
+    bk_value = (char*)bc_malloc(sizeof(value));
     /*Copy the command argv*/
     strcpy(bk_value, value);
 

@@ -6,12 +6,13 @@
 #include "db.h"
 #include "lru.h"
 #include "bitcase.h"
+#include "bcmem.h"
 
 /*Init a lru list*/
 int lru_init(lru_list *llist) {
     if (llist) {
-        llist->head = (lru_node*)malloc(sizeof(lru_node));
-        llist->tail = (lru_node*)malloc(sizeof(lru_node));
+        llist->head = (lru_node*)bc_malloc(sizeof(lru_node));
+        llist->tail = (lru_node*)bc_malloc(sizeof(lru_node));
         if (llist->head && llist->tail) {
             /*Init head and tail node*/
             llist->head->prev = NULL;
