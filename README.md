@@ -5,7 +5,9 @@ A toy memory database for learning,a lot of things inspired by redis.
 
 ### How to build
 
-Bitcase runs on linux now only.First make sure that you have `gcc`,`make`,`cmake` and `git` installed.
+Bitcase runs on linux now only.First make sure that your system have below software installed:
+
+`gcc`,`make`,`cmake`,`g++`,`wget`,`automake`,`libtool`,`git`,`python`
 
 Ubuntu:
 
