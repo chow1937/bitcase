@@ -13,14 +13,10 @@ Ubuntu:
     git clone https://github.com/chow1937/bitcase.git
 
     # build libuv
-    cd bitcase/libuv
-    sh autogen.sh
-    ./configure --prefix=/usr
-    make
-    sudo make install
+    cd bitcase
+    make libuv
 
     # build bitcase
-    cd bitcase
     make
 
 ### Test
