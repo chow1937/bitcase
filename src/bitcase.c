@@ -8,12 +8,10 @@
 
 #include "hashtable.h"
 #include "db.h"
-#include "cmd.h"
 #include "bitcase.h"
+#include "cmd.h"
 #include "cron.h"
 #include "bcmem.h"
-
-struct server_t server;
 
 /*----Helper functions--*/
 
@@ -67,7 +65,7 @@ static void after_read(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
         char *tmp_buf;
         uv_buf_t response_buf;
 
-        c = cmd_parser((char*)buf.base);
+        c = cmd_parser((server_t*)stream->data, (char*)buf.base);
         cmd_execute(c);
 
         /*Send response*/
@@ -90,7 +88,11 @@ static void on_connection(uv_stream_t* stream, int status) {
     }
     /*Init the client stream*/
     uv_tcp_t *client = (uv_tcp_t*)bc_malloc(sizeof(uv_tcp_t));
-    uv_tcp_init(server.loop, client);
+    uv_tcp_init(uv_default_loop(), client);
+
+    /*Save the server ptr from server stream to client stream*/
+    client->data = stream->data;
+
     /*Accept the connection,start to read or close the client stream*/
     if (uv_accept(stream, (uv_stream_t*)client) == 0) {
         uv_read_start((uv_stream_t*)client, alloc_buffer, after_read);
@@ -100,33 +102,37 @@ static void on_connection(uv_stream_t* stream, int status) {
 }
 
 /*Init the server*/
-static void init_server(void) {
+static void init_server(server_t *server) {
     /*Init the server loop and server stream*/
-    server.loop = uv_default_loop();
-    server.stream = (uv_tcp_t*)bc_malloc(sizeof(uv_tcp_t));
-    if (uv_tcp_init(server.loop, server.stream)) {
+    server->loop = uv_default_loop();
+    server->stream = (uv_tcp_t*)bc_malloc(sizeof(uv_tcp_t));
+    /*Save the server ptr in the stream*/
+    server->stream->data = (void*)server;
+    if (uv_tcp_init(server->loop, server->stream)) {
         fprintf(stderr, "Socket create error\n");
         return;
     }
 
     /*Bind the addr to server*/
-    server.bind_addr = uv_ip4_addr("0.0.0.0", BC_PORT);
-    if (uv_tcp_bind(server.stream, server.bind_addr)) {
+    server->bind_addr = uv_ip4_addr("0.0.0.0", BC_PORT);
+    if (uv_tcp_bind(server->stream, server->bind_addr)) {
         fprintf(stderr, "Addr bind error\n");
         return;
     }
 
     /*Init DB and command table*/
-    server.d = (db*)bc_malloc(sizeof(db));
-    db_init(server.d);
-    if (cmd_init_commands() == CMD_ERROR) {
+    server->d = (db*)bc_malloc(sizeof(db));
+    db_init(server->d);
+
+    server->commands = (hash_table*)bc_malloc(sizeof(hash_table));
+    if (cmd_init_commands(server->commands) == CMD_ERROR) {
         fprintf(stderr, "Command table init error");
         return;
     }
 }
 
 /*Start cron jobs*/
-static void start_cron(void) {
+static void start_cron(server_t *server) {
     uv_timer_t *resize_timer;
     uv_timer_t *rehash_timer;
     uv_timer_t *mem_count_timer;
@@ -136,10 +142,15 @@ static void start_cron(void) {
     rehash_timer = (uv_timer_t*)bc_malloc(sizeof(uv_timer_t));
     mem_count_timer = (uv_timer_t*)bc_malloc(sizeof(uv_timer_t));
 
+    /*Save the server ptr in the timer handle*/
+    resize_timer->data = (void*)server;
+    rehash_timer->data = (void*)server;
+    mem_count_timer->data = (void*)server;
+
     /*Init these timers*/
-    uv_timer_init(server.loop, resize_timer);
-    uv_timer_init(server.loop, rehash_timer);
-    uv_timer_init(server.loop, mem_count_timer);
+    uv_timer_init(server->loop, resize_timer);
+    uv_timer_init(server->loop, rehash_timer);
+    uv_timer_init(server->loop, mem_count_timer);
 
     /*Start these timers*/
     uv_timer_start(resize_timer, cron_check_resize, 5000, RESIZE_INTERVAL);
@@ -152,19 +163,21 @@ static void start_cron(void) {
 
 int main(int argc, char **argv) {
     int errno;
+    server_t *server;
 
+    server = (server_t*)bc_malloc(sizeof(server_t));
     /*Init server and start cron jobs*/
-    init_server();
-    start_cron();
+    init_server(server);
+    start_cron(server);
 
     /*Server start to listen connections*/
-    errno = uv_listen((uv_stream_t*)server.stream, 128, on_connection);
+    errno = uv_listen((uv_stream_t*)server->stream, 128, on_connection);
     if (errno) {
         fprintf(stderr, "Listen error %s\n", uv_err_name(errno));
         return BC_ERROR;
     }
 
-    uv_run(server.loop, UV_RUN_DEFAULT);
+    uv_run(server->loop, UV_RUN_DEFAULT);
 
     return 0;
 }

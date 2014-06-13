@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "hashtable.h"
+#include "db.h"
 #include "lru.h"
 #include "hashtable.h"
 #include "bcmem.h"

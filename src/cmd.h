@@ -23,16 +23,16 @@ struct cmd {
 };
 
 /*APIs*/
-int cmd_init_commands(void);
-int cmd_set_procfun(cmd *c, char *cmd_name);
-cmd *cmd_parser(char *cmd_str);
+int cmd_init_commands(hash_table *commands);
+int cmd_set_procfun(hash_table *commands, cmd *c, char *cmd_name);
+cmd *cmd_parser(server_t *server, char *cmd_str);
 int cmd_execute(cmd *c);
 int cmd_free(cmd *c);
 
 /*Command process functions*/
-int cmd_get_proc(cmd *c);
-int cmd_set_proc(cmd *c);
-int cmd_delete_proc(cmd *c);
-int cmd_update_proc(cmd *c);
+int cmd_get(cmd *c);
+int cmd_set(cmd *c);
+int cmd_delete(cmd *c);
+int cmd_update(cmd *c);
 
 #endif

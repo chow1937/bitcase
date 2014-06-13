@@ -52,15 +52,15 @@ int detach(lru_node *lru) {
     return LRU_OK;
 }
 
-/*Detach and remove n node from tail*/
-int lru_remove(lru_list *llist, int n) {
+/*Detach and remove n node from tail in a db*/
+int lru_remove(db *d, int n) {
     int i;
     lru_node *node;
 
     for (i = 0;i < 100;i++) {
-        node = llist->tail->prev;
+        node = d->llist->tail->prev;
         detach(node);
-        db_delete_key(server.d, node->bk->key);
+        db_delete_key(d, node->bk->key);
     }
 
     return LRU_OK;

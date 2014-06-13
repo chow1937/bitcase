@@ -6,19 +6,18 @@
 
 #include "hashtable.h"
 #include "db.h"
-#include "cmd.h"
 #include "bitcase.h"
+#include "cmd.h"
 #include "bcmem.h"
 
-/*Init the server commands table*/
-int cmd_init_commands(void) {
-    server.commands = (hash_table*)bc_malloc(sizeof(hash_table));
-    if (ht_alloc(server.commands, CMD_TABLE_SIZE) == HT_OK) {
-        /*Add commands into the server.commands hashtable*/
-        ht_add(server.commands, "get", cmd_get_proc);
-        ht_add(server.commands, "set", cmd_set_proc);
-        ht_add(server.commands, "delete", cmd_delete_proc);
-        ht_add(server.commands, "update", cmd_update_proc);
+/*Init a certain commands table*/
+int cmd_init_commands(hash_table *commands) {
+    if (ht_alloc(commands, CMD_TABLE_SIZE) == HT_OK) {
+        /*Add commands into the commands hashtable*/
+        ht_add(commands, "get", cmd_get);
+        ht_add(commands, "set", cmd_set);
+        ht_add(commands, "delete", cmd_delete);
+        ht_add(commands, "update", cmd_update);
 
         return CMD_OK;
     }
@@ -26,10 +25,10 @@ int cmd_init_commands(void) {
     return CMD_ERROR;
 }
 
-/*Set command process function to a cmd*/
-int cmd_set_procfun(cmd *c, char *cmd_name) {
-    /*Find the process function in server.commands hashtable*/
-    bucket *bk = ht_find(server.commands, cmd_name);
+/*Set command hook function to a cmd*/
+int cmd_set_procfun(hash_table *commands, cmd *c, char *cmd_name) {
+    /*Find the hook function in commands hashtable*/
+    bucket *bk = ht_find(commands, cmd_name);
 
     if (bk) {
         if (bk->value) {
@@ -43,7 +42,7 @@ int cmd_set_procfun(cmd *c, char *cmd_name) {
 }
 
 /*Parse a command string,return a cmd*/
-cmd *cmd_parser(char *cmd_str) {
+cmd *cmd_parser(server_t *server, char *cmd_str) {
     int argc, i;
     size_t len;
     cmd *c;
@@ -75,8 +74,8 @@ cmd *cmd_parser(char *cmd_str) {
         strncpy(c->argv[i], tmp, len);
         c->argv[i][len] = '\0';
     }
-    if (cmd_set_procfun(c, cmd_name) == CMD_OK) {
-        c->d = server.d;
+    if (cmd_set_procfun(server->commands, c, cmd_name) == CMD_OK) {
+        c->d = server->d;
         bc_free(cmd_name);
 
         return c;
@@ -105,7 +104,7 @@ int cmd_free(cmd *c) {
 }
 
 /*Process the get command*/
-int cmd_get_proc(cmd *c) {
+int cmd_get(cmd *c) {
     bucket *bk;
     char *err_str = "Wrong arg number for command GET,accept only 1";
     char *fail_str = "Key not exists";
@@ -133,7 +132,7 @@ int cmd_get_proc(cmd *c) {
 }
 
 /*Process the set command*/
-int cmd_set_proc(cmd *c) {
+int cmd_set(cmd *c) {
     char *ok_str = "OK";
     char *err_str = "Wrong arg number for command SET,accept only 2";
     char *fail_str = "key exists,add fail";
@@ -161,7 +160,7 @@ int cmd_set_proc(cmd *c) {
 }
 
 /*Process the delete command*/
-int cmd_delete_proc(cmd *c) {
+int cmd_delete(cmd *c) {
     char *ok_str = "OK";
     char *err_str = "Wrong arg number for command DELETE,accept only 1";
     char *fail_str = "Key not exists";
@@ -188,7 +187,7 @@ int cmd_delete_proc(cmd *c) {
 }
 
 /*Process the udpate command*/
-int cmd_update_proc(cmd *c) {
+int cmd_update(cmd *c) {
     char *ok_str = "OK";
     char *err_str = "Wrong arg number for command UPDATE,accpet only 2";
     char *fail_str = "Key not exists";
