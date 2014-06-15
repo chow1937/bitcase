@@ -7,6 +7,7 @@
 #include "bitcase.h"
 #include "lru.h"
 #include "cron.h"
+#include "bcmem.h"
 
 /*
  * Check if the db need resize.
@@ -53,7 +54,7 @@ void cron_rehash(uv_timer_t* handle, int status) {
 void cron_count_memory(uv_timer_t* handle, int status) {
     int i;
     server_t *server = (server_t*)handle->data;
-    uint32_t mem_used = db_count_mem(server->d);
+    uint32_t mem_used = bc_used();
 
     if (mem_used > server->d->mem_limit) {
         /*Remove 100 bucket from the tail of the LRU lis*/

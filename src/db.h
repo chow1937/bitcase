@@ -33,6 +33,5 @@ int db_delete_key(db *d, void *key);
 int db_rehash(db *d, int n);
 int db_rehash_millisec(db *d, int n);
 int db_resize(db *d, uint32_t size);
-uint32_t db_count_mem(db *d);
 
 #endif
