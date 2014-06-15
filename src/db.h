@@ -1,6 +1,8 @@
 #ifndef _DB_H
 #define _DB_H
 
+#include <stdint.h>
+
 /*Status code*/
 #define DB_OK 0
 #define DB_ERROR -1

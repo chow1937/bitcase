@@ -1,6 +1,8 @@
 #ifndef _HASHTABLE_H
 #define _HASHTABLE_H
 
+#include <stdint.h>
+
 /*Status codes*/
 #define HT_OK 0
 #define HT_ERROR -1
